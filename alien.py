@@ -23,8 +23,6 @@ class Alien(Sprite):
         # Get exact horizontal position
         self.x = float(self.rect.x)
 
-        
-
     def update(self):
         """ Update movement of alien """
         self.x += (self.settings.alien_speed * self.settings.fleet_direction)
