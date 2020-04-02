@@ -6,6 +6,8 @@ from settings import Settings
 from ship import Ship
 # Adding bullet class
 from bullet import Bullet
+# Adding alien class
+from alien import Alien
 
 
 class AlienInvasion:
@@ -22,7 +24,7 @@ class AlienInvasion:
 
         # Set screen mode
         self.screen = pygame.display.set_mode((self.settings.screen_width,
-            self.settings.screen_height))
+                                               self.settings.screen_height))
 
         # Set width and height of settings class
         self.settings.screen_width = self.screen.get_rect().width
@@ -35,6 +37,57 @@ class AlienInvasion:
         # A group bullet for manage live bullets
         self.bullets = pygame.sprite.Group()
 
+        # A group of alien
+        self.aliens = pygame.sprite.Group()
+
+        self._create_fleet()
+
+    def _check_fleet_edges(self):
+        """ Check aliens of edge and change fleet direction """
+        for alien in self.aliens.sprites():
+            if alien.check_edges():
+                self._change_fleet_direction()
+                break
+
+    def _change_fleet_direction(self):
+        """ Change fleet direction of aline """
+        for alien in self.aliens.sprites():
+            alien.rect.y += self.settings.fleet_drop_speed
+        self.settings.fleet_direction *= -1
+
+    def _create_fleet(self):
+        """ Create a fleet of aliens """
+        # Create a instance of alien class
+        alien = Alien(self)
+        # Get width of a alien
+        alien_width, alien_height = alien.rect.size
+        # Calculate available space of screen
+        available_space_x = self.settings.screen_width - (2 * alien_width)
+        # Calculate count of aliens
+        number_aliens_x = available_space_x // (2 * alien_width)
+
+        # Determine the number of rows of aliens that fit on the screen.
+        ship_height = self.ship.rect.height
+
+        available_space_y = (self.settings.screen_height -
+                             (3 * alien_height) - ship_height)
+        number_rows = available_space_y // (2 * alien_height)
+
+        # Calculate space of each aliens and to group
+        for row_number in range(number_rows):
+            for alien_number in range(number_aliens_x):
+                self._create_alien(alien_number, row_number)
+
+    def _create_alien(self, alien_number, row_number):
+        """ Create a sample alien """
+        alien = Alien(self)
+        alien_width, alien_height = alien.rect.size
+        alien.x = alien_width + 2 * alien_width * alien_number
+        alien.rect.x = alien.x
+        alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+        # Add alien to sprite group
+        self.aliens.add(alien)
+
     def run_game(self):
         ''' Run game '''
         while True:
@@ -44,8 +97,15 @@ class AlienInvasion:
             self.ship.update()
             # Update position of bullets and remove extra bullets
             self._update_bullets()
+            # Update position of fleet aliens
+            self._update_aliens()
             # Update screen
             self._update_screen()
+
+    def _update_aliens(self):
+        """ Update position of aliens """
+        self._check_fleet_edges()
+        self.aliens.update()
 
     def _update_bullets(self):
         """ Update position of bullets and Get rid of bullets to remove """
@@ -55,7 +115,10 @@ class AlienInvasion:
         for bullet in self.bullets.copy():
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
-        print(len(self.bullets))
+
+        # Check collisions of bullets and alien, then rid this
+        collisions = pygame.sprite.groupcollide(
+            self.bullets, self.aliens, True, True)
 
     def _check_event(self):
         ''' Check events and quit '''
@@ -117,6 +180,8 @@ class AlienInvasion:
         # Draw bullets in group
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
+        # Draw alien on screen
+        self.aliens.draw(self.screen)
         # Show screen object in loop
         pygame.display.flip()
 
