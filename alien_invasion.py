@@ -39,7 +39,6 @@ class AlienInvasion:
         # Set caption game
         pygame.display.set_caption('Alien Invasion')
 
-
         # Create an instace to store game statistics,
         # and create a scoreboard.
         self.stats = GameStats(self)
